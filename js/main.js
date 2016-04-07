@@ -1,23 +1,11 @@
-window.onload = function() {
-    // You might want to start with a template that uses GameStates:
-    //     https://github.com/photonstorm/phaser/tree/master/resources/Project%20Templates/Basic
-    
-    // You can copy-and-paste the code from any of the examples at http://examples.phaser.io here.
-    // You will need to change the fourth parameter to "new Phaser.Game()" from
-    // 'phaser-example' to 'game', which is the id of the HTML element where we
-    // want the game to go.
-    // The assets (and code) can be found at: https://github.com/photonstorm/phaser/tree/master/examples/assets
-    // You will need to change the paths you pass to "game.load.image()" or any other
-    // loading functions to reflect where you are putting the assets.
-    // All loading functions will typically all be found inside "preload()".
+window.onload = function () {
     
     "use strict";
     
-    var game = new Phaser.Game( 800, 600, Phaser.AUTO, 'game', { preload: preload, create: create, update: update, render: render } );
+    var game = new Phaser.Game( 800, 600, Phaser.AUTO, 'game', { preload: preload, create: create, update: update } );
     
     function preload() 
     {
-        // Load an image and call it 'logo'.
         game.load.spritesheet('heart', 'assets/heart.png', 40, 23);
         game.load.spritesheet('stick', 'assets/play.png', 32, 60);
         game.load.spritesheet('snaker', 'assets/snake.png', 60, 32);
@@ -36,6 +24,7 @@ window.onload = function() {
         game.load.audio('keyS', 'assets/nes-13-08_01.mp3');
         game.load.audio('caught', 'assets/nes-14-11_01.mp3');
         game.load.audio('escape', 'assets/escape.mp3');
+        game.load.audio('jump', 'assets/lazer.wav');
     }
     
     var player;
@@ -69,7 +58,7 @@ window.onload = function() {
     var lifeCounter = 2;
     var steps = false;
     var jump;
-    var invincible;
+    var invincible = false;
     var isShadow = false;
     var walk;
     var keySound;
@@ -94,8 +83,8 @@ window.onload = function() {
         instr = game.add.sprite(0, 0, 'score');
         score = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
         lives = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
-        background.scale.x = 1.1;
-        background.scale.y = 1.1;
+        background.scale.x = 1.3;
+        background.scale.y = 1.3;
         
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -273,13 +262,13 @@ window.onload = function() {
             if (direction == 0)
                 player.animations.play('crouchLeft');
             else
-                player.animations.plays('crouchRight');            
+                player.animations.play('crouchRight');            
         }
         else
         {
             player.body.acceleration.x = 0;
             player.body.setSize(32, 60);
-            if (direction == 0)d
+            if (direction == 0)
                 player.animations.play('faceLeft');
             else
                 player.animations.play('faceRight');    
@@ -546,4 +535,4 @@ window.onload = function() {
     //game.debug.spriteBounds(player);
     }
     
-};
+}
