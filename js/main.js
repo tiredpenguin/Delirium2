@@ -1,23 +1,11 @@
-window.onload = function() {
-    // You might want to start with a template that uses GameStates:
-    //     https://github.com/photonstorm/phaser/tree/master/resources/Project%20Templates/Basic
-    
-    // You can copy-and-paste the code from any of the examples at http://examples.phaser.io here.
-    // You will need to change the fourth parameter to "new Phaser.Game()" from
-    // 'phaser-example' to 'game', which is the id of the HTML element where we
-    // want the game to go.
-    // The assets (and code) can be found at: https://github.com/photonstorm/phaser/tree/master/examples/assets
-    // You will need to change the paths you pass to "game.load.image()" or any other
-    // loading functions to reflect where you are putting the assets.
-    // All loading functions will typically all be found inside "preload()".
+window.onload = function () {
     
     "use strict";
     
-    var game = new Phaser.Game( 800, 600, Phaser.AUTO, 'game', { preload: preload, create: create, update: update, render: render } );
+    var game = new Phaser.Game( 800, 600, Phaser.AUTO, 'game', { preload: preload, create: create, update: update } );
     
     function preload() 
     {
-        // Load an image and call it 'logo'.
         game.load.spritesheet('heart', 'assets/heart.png', 40, 23);
         game.load.spritesheet('stick', 'assets/play.png', 32, 60);
         game.load.spritesheet('snaker', 'assets/snake.png', 60, 32);
@@ -32,10 +20,12 @@ window.onload = function() {
         game.load.image('score', 'assets/score.png');
         game.load.image('survive', 'assets/survive.png');
         game.load.image('dead', 'assets/dead.png');
+        game.load.image('snow', 'assets/snow.png');
         game.load.audio('walkSound', 'assets/walking.mp3');
         game.load.audio('keyS', 'assets/nes-13-08_01.mp3');
         game.load.audio('caught', 'assets/nes-14-11_01.mp3');
         game.load.audio('escape', 'assets/escape.mp3');
+        game.load.audio('jump', 'assets/lazer.wav');
     }
     
     var player;
@@ -49,8 +39,10 @@ window.onload = function() {
     var spiderGroup;
     var shadowGroup;
     var heartGroup;
+    var snowGroup;
     var maxEnemy = 3;
     var lastEnemy = 0;
+    var lastSnow = 0;
     var enemySnake;
     var selection;
     var direction = 0;
@@ -69,7 +61,7 @@ window.onload = function() {
     var lifeCounter = 2;
     var steps = false;
     var jump;
-    var invincible;
+    var invincible = false;
     var isShadow = false;
     var walk;
     var keySound;
@@ -94,8 +86,8 @@ window.onload = function() {
         instr = game.add.sprite(0, 0, 'score');
         score = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
         lives = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
-        background.scale.x = 1.1;
-        background.scale.y = 1.1;
+        background.scale.x = 1.3;
+        background.scale.y = 1.3;
         
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -138,6 +130,22 @@ window.onload = function() {
             player.body.maxVelocity.setTo(maxSpeed, 2000);
             heart.anchor.setTo(.5, 1);
             heart.kill();
+        }
+        
+        snowGroup = game.add.group();
+        for(var i = 0; i < 10; i++) 
+        {
+            var snow = game.add.sprite(0, 0, 'snow');
+            snow.animations.add('spawn', [0], 4, true);
+            snow.animations.add('grow', [1, 2, 3], 4, true);
+            snow.animations.add('move', [3], 2, true);
+            snowGroup.add(snow);
+            game.physics.enable(snow, Phaser.Physics.ARCADE);
+            snow.body.gravity.y = 400;
+            snow.body.drag.setTo(drag, 0);
+            player.body.maxVelocity.setTo(maxSpeed, 2000);
+            snow.anchor.setTo(.5, 1);
+            snow.kill();
         }
 
         spiderGroup = game.add.group();
@@ -208,6 +216,7 @@ window.onload = function() {
         }
         
         game.time.events.add((Phaser.Timer.SECOND * 9), spawnEnemy, this);
+        game.time.events.add((Phaser.Timer.SECOND * 9), spawnSnow, this);
         game.time.events.add((Phaser.Timer.SECOND * 7), start, this);
         this.game.time.events.loop(500, function() {  this.game.add.tween(text).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-10, 10)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
         this.game.time.events.loop(2000, function() {  this.game.add.tween(background).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-10, 10)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
@@ -229,6 +238,7 @@ window.onload = function() {
         game.physics.arcade.collide(shadowGroup, platform);
         game.physics.arcade.collide(spiderGroup, platform);
         game.physics.arcade.collide(heartGroup, platform);
+        game.physics.arcade.collide(snowGroup, platform);
         game.physics.arcade.collide(player, snakeGroup, checkCollision, null, this);
         game.physics.arcade.collide(player, spiderGroup, checkCollision, null, this);
         game.physics.arcade.collide(player, shadowGroup, checkCollision, null, this);
@@ -273,13 +283,13 @@ window.onload = function() {
             if (direction == 0)
                 player.animations.play('crouchLeft');
             else
-                player.animations.plays('crouchRight');            
+                player.animations.play('crouchRight');            
         }
         else
         {
             player.body.acceleration.x = 0;
             player.body.setSize(32, 60);
-            if (direction == 0)d
+            if (direction == 0)
                 player.animations.play('faceLeft');
             else
                 player.animations.play('faceRight');    
@@ -312,7 +322,28 @@ window.onload = function() {
             spawnShadow();
         else
             spawnHeart();
-        game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 3) + 1, spawnEnemy, this);
+        if (!dead) game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 3) + 1, spawnEnemy, this);
+    }
+    
+    function spawnSnow()
+    {
+        lastSnow = 0;
+        if (game.time.now - lastSnow < 200) return;
+        lastSnow = game.time.now;
+        function selfdestruct()
+        {
+            snow.kill();
+        }
+        var snow = snowGroup.getFirstDead();
+        if (snow === null || snow === undefined || dead) return;
+        snow.revive();
+        snow.checkWorldBounds = true;
+        snow.outOfBoundsKill = true;
+        snow.reset(game.rnd.between(50,750), 100);
+        snow.scale.x = 1;
+        snow.poison = false;
+        game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 7) + 2, selfdestruct, this);
+        game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 2), spawnSnow, this);
     }
         
     
@@ -347,7 +378,7 @@ window.onload = function() {
         spider.reset(game.rnd.between(50,750), 100);
         spider.poison = false;
         spider.animations.play('spawn');
-        game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 6) + 1, grow1, this);
+        game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 7) + 1, grow1, this);
     }
 
     
@@ -382,7 +413,7 @@ window.onload = function() {
         snake.scale.x = 1;
         snake.poison = false;
         snake.animations.play('spawn');
-        game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 6) + 1, grow2, this);
+        game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 7) + 1, grow2, this);
     }
     
     
@@ -417,7 +448,7 @@ window.onload = function() {
         shadow.scale.x = 1;
         shadow.animations.play('spawn');
         shadow.poison = false;
-        game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 5) + 2, grow3, this);
+        game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 7) + 2, grow3, this);
     }
     
     function spawnHeart()
@@ -446,7 +477,7 @@ window.onload = function() {
         heart.scale.x = 1;
         heart.animations.play('spawn');
         heart.poison = false;
-        game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 5) + 2, grow3, this);
+        game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 7) + 2, grow3, this);
     }
     
     function checkCollision(player, enemy)
@@ -546,4 +577,4 @@ window.onload = function() {
     //game.debug.spriteBounds(player);
     }
     
-};
+}
