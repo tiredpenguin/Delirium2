@@ -28,6 +28,7 @@ window.onload = function () {
         game.load.audio('jump', 'assets/lazer.wav');
     }
     
+    //Game related variables
     var player;
     var platform;
     var cursors;
@@ -35,34 +36,37 @@ window.onload = function () {
     var maxSpeed = 300;
     var acceleration = 2300;
     var drag = 800;
+    var lastEnemy = 0;
+    var lastSnow = 0;
+    var selection;
+    var direction = 0;
+    var poison;
+    var dead = false;
+    var invincible = false;
+    var isShadow = false;
+    var background;
+    var instructionText;
+    var lifeAndScore;
+    var surviveText;
+    var deadText;
+    var score;
+    var counter = 0;
+    var explosions;
+    var lifeObject;
+    var lifeEffect;
+    var lifeCounter = 2;
+    var steps = false;
+    
+    //Groups
     var snakeGroup;
     var spiderGroup;
     var shadowGroup;
     var heartGroup;
     var snowGroup;
-    var maxEnemy = 3;
-    var lastEnemy = 0;
-    var lastSnow = 0;
-    var enemySnake;
-    var selection;
-    var direction = 0;
-    var poison;
-    var dead = false;
-    var background;
-    var text;
-    var instr;
-    var instr2;
-    var instr3;
-    var score;
-    var counter = 0;
-    var explosions;
-    var lives;
-    var lifeEffect;
-    var lifeCounter = 2;
-    var steps = false;
+
+    
+    //Sounds
     var jump;
-    var invincible = false;
-    var isShadow = false;
     var walk;
     var keySound;
     var caught;
@@ -82,10 +86,10 @@ window.onload = function () {
         
         game.add.sprite(0, 0, 'background');
         background = game.add.sprite(0, 0, 'background2');
-        text = game.add.sprite(0, 0, 'instruct');
-        instr = game.add.sprite(0, 0, 'score');
+        instructionText = game.add.sprite(0, 0, 'instruct');
+        lifeAndScore = game.add.sprite(0, 0, 'score');
         score = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
-        lives = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+        lifeObject = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
         background.scale.x = 1.3;
         background.scale.y = 1.3;
         
@@ -215,15 +219,15 @@ window.onload = function () {
             lifeAnimation.animations.add('life');
         }
         
-        game.time.events.add((Phaser.Timer.SECOND * 9), spawnEnemy, this);
-        game.time.events.add((Phaser.Timer.SECOND * 9), spawnSnow, this);
-        game.time.events.add((Phaser.Timer.SECOND * 7), start, this);
-        this.game.time.events.loop(500, function() {  this.game.add.tween(text).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-10, 10)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
+        game.time.events.add((Phaser.Timer.SECOND * 3), spawnEnemy, this);
+        game.time.events.add((Phaser.Timer.SECOND * 3), spawnSnow, this);
+        game.time.events.add((Phaser.Timer.SECOND * 1), start, this);
+        this.game.time.events.loop(500, function() {  this.game.add.tween(instructionText).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-10, 10)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
         this.game.time.events.loop(2000, function() {  this.game.add.tween(background).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-10, 10)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
         this.game.time.events.loop(500, function() { this.game.add.tween(platform).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-20, 20)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
 
         game.world.bringToTop(platform);
-        game.world.bringToTop(text);
+        game.world.bringToTop(instructionText);
         
         game.physics.arcade.TILE_BIAS = 60;
         
@@ -497,8 +501,8 @@ window.onload = function () {
                     enemy.angle = 180;
                     game.time.events.add((Phaser.Timer.SECOND * .4), killNow, this);
                     counter += 1;
-                    game.world.remove(instr);
-                    instr = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+                    game.world.remove(lifeAndScore);
+                    lifeAndScore = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
                     var explosionAnimation = explosions.getFirstExists(false);
                     explosionAnimation.reset(player.x, player.y);
                     explosionAnimation.play('kaboom', 20, false, true);
@@ -513,8 +517,8 @@ window.onload = function () {
                     player.body.velocity.y = -1000;
                     lifeCounter--;
                     caught.play();
-                    game.world.remove(lives);
-                    lives = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+                    game.world.remove(lifeObject);
+                    lifeObject = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
                     toggleInvincible();
                     game.time.events.add(2000, toggleInvincible, this);
                 }
@@ -527,7 +531,7 @@ window.onload = function () {
     {
         dead = true;
         player.angle = 90;
-        instr3 = game.add.sprite(0, 0, 'dead');
+        deadText = game.add.sprite(0, 0, 'dead');
     }
     
     function gainLife(player, heart)
@@ -535,8 +539,8 @@ window.onload = function () {
         if (heart.poison)
         {
             lifeCounter++;
-            game.world.remove(lives);
-            lives = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+            game.world.remove(lifeObject);
+            lifeObject = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
             var lifeAnimation = lifeEffect.getFirstExists(false);
             lifeAnimation.reset(player.x, player.y);
             lifeAnimation.play('life', 14, false, true);
@@ -556,20 +560,20 @@ window.onload = function () {
     
     function start()
     {
-        text.kill();
+        instructionText.kill();
         game.world.bringToTop(background);
         game.world.bringToTop(platform);
         game.world.bringToTop(counter);
         game.world.remove(score);
-        instr = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+        lifeAndScore = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
         score = game.add.sprite(0, 0, 'score');
-        lives = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
-        instr2 = game.add.sprite(0, 0, 'survive');
+        lifeObject = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+        surviveText = game.add.sprite(0, 0, 'survive');
         game.time.events.add((Phaser.Timer.SECOND * 2), remove, this);
     }
     function remove()
     {
-        instr2.kill();
+        surviveText.kill();
     }
     
     function render() {
