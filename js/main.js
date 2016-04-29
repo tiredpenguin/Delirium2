@@ -17,18 +17,20 @@ window.onload = function () {
         game.load.image('background', 'assets/bg1.png');
         game.load.image('background2', 'assets/bg2.png');
         game.load.image('instruct', 'assets/controls.png');
-        game.load.image('score', 'assets/score.png');
+        game.load.image('score1', 'assets/score.png');
         game.load.image('survive', 'assets/survive.png');
-        game.load.image('dead', 'assets/dead.png');
+        game.load.image('dead', 'assets/gameover.png');
         game.load.image('snow', 'assets/snow.png');
         game.load.audio('walkSound', 'assets/walking.mp3');
         game.load.audio('keyS', 'assets/nes-13-08_01.mp3');
         game.load.audio('caught', 'assets/nes-14-11_01.mp3');
         game.load.audio('escape', 'assets/escape.mp3');
         game.load.audio('jump', 'assets/lazer.wav');
+        game.load.image('startScreen','assets/starfield.png');
+        game.load.spritesheet('button','assets/startButton.png');
+        game.load.image('howToPlay','assets/instructions.png');
     }
     
-    //Game related variables
     var player;
     var platform;
     var cursors;
@@ -36,45 +38,48 @@ window.onload = function () {
     var maxSpeed = 300;
     var acceleration = 2300;
     var drag = 800;
-    var lastEnemy = 0;
-    var lastSnow = 0;
-    var selection;
-    var direction = 0;
-    var poison;
-    var dead = false;
-    var invincible = false;
-    var isShadow = false;
-    var background;
-    var instructionText;
-    var lifeAndScore;
-    var surviveText;
-    var deadText;
-    var score;
-    var counter = 0;
-    var explosions;
-    var lifeObject;
-    var lifeEffect;
-    var lifeCounter = 2;
-    var steps = false;
-    
-    //Groups
     var snakeGroup;
     var spiderGroup;
     var shadowGroup;
     var heartGroup;
     var snowGroup;
-
-    
-    //Sounds
+    var maxEnemy = 3;
+    var lastEnemy = 0;
+    var lastSnow = 0;
+    var enemySnake;
+    var selection;
+    var direction = 0;
+    var poison;
+    var dead = false;
+    var background;
+    var text;
+    var instr;
+    var instr2;
+    var instr3;
+    var score;
+    var counter = 0;
+    var explosions;
+    var lives;
+    var lifeEffect;
+    var lifeCounter = 2;
+    var steps = false;
     var jump;
+    var invincible = false;
+    var isShadow = false;
     var walk;
     var keySound;
     var caught;
     var escape;
     var jump;
+    var stateText;
+    var startScreen;
+    var button;
+    var howToPlay;
     
     function create() 
     {
+       
+        
         walk = game.add.audio('walkSound');
         keySound = game.add.audio('keyS');
         caught = game.add.audio('caught');
@@ -86,10 +91,14 @@ window.onload = function () {
         
         game.add.sprite(0, 0, 'background');
         background = game.add.sprite(0, 0, 'background2');
-        instructionText = game.add.sprite(0, 0, 'instruct');
-        lifeAndScore = game.add.sprite(0, 0, 'score');
+       // text = game.add.sprite(0, 0, 'instruct');
+        instr = game.add.sprite(0, 0, 'score1');
+        
+        //score of the game
         score = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
-        lifeObject = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+        
+        //number f lives
+        lives = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
         background.scale.x = 1.3;
         background.scale.y = 1.3;
         
@@ -136,6 +145,7 @@ window.onload = function () {
             heart.kill();
         }
         
+        //falling particles doesn't do anything
         snowGroup = game.add.group();
         for(var i = 0; i < 10; i++) 
         {
@@ -219,19 +229,36 @@ window.onload = function () {
             lifeAnimation.animations.add('life');
         }
         
-        game.time.events.add((Phaser.Timer.SECOND * 3), spawnEnemy, this);
-        game.time.events.add((Phaser.Timer.SECOND * 3), spawnSnow, this);
-        game.time.events.add((Phaser.Timer.SECOND * 1), start, this);
-        this.game.time.events.loop(500, function() {  this.game.add.tween(instructionText).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-10, 10)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
-        this.game.time.events.loop(2000, function() {  this.game.add.tween(background).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-10, 10)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
-        this.game.time.events.loop(500, function() { this.game.add.tween(platform).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-20, 20)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
+
+       /* game.time.events.add((Phaser.Timer.SECOND * 9), spawnEnemy, this);
+        game.time.events.add((Phaser.Timer.SECOND * 9), spawnSnow, this);
+        game.time.events.add((Phaser.Timer.SECOND * 7), start, this);
+        this.game.time.events.loop(500, function() {  //this.game.add.tween(text).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-10, 10)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
+        //this.game.time.events.loop(2000, function() {  
+            
+        this.game.add.tween(background).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-10, 10)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
+        this.game.time.events.loop(500, function() { this.game.add.tween(platform).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-20, 20)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);*/
 
         game.world.bringToTop(platform);
-        game.world.bringToTop(instructionText);
+       // game.world.bringToTop(text);
         
         game.physics.arcade.TILE_BIAS = 60;
         
         cursors = game.input.keyboard;
+       
+        game.world.bringToTop(instr);
+        
+        //lives
+        lives = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+        
+         //Start Menu:
+        startScreen = game.add.tileSprite(0,0,800,600,'startScreen');
+        howToPlay = game.add.image(150,200,'howToPlay');
+        button = game.add.button(150,400,'button',actionOnClick,this,2,1,0);
+        button.onInputOver.add(over,this);
+        button.onInputOut.add(out,this);
+        button.onInputUp.add(up,this);
+       
 
     }
     
@@ -308,8 +335,8 @@ window.onload = function () {
         if (player.body.velocity.x != 0 & player.body.touching.down & !walk.isPlaying)
             walk.play('',0,.3);
         }
-        else
-            player.frame = 14;
+       /* else
+            player.frame = 14;*/
     }
     
     function spawnEnemy()
@@ -326,6 +353,7 @@ window.onload = function () {
             spawnShadow();
         else
             spawnHeart();
+        //when you die it stops calling this bc boolean 'dead' is false
         if (!dead) game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 3) + 1, spawnEnemy, this);
     }
     
@@ -490,7 +518,7 @@ window.onload = function () {
         {
             enemy.kill();
         }
-        if (enemy.poison)
+        if (enemy.poison) //poison is when enemy can do damage to you
             {
                 if (enemy.body.touching.up & !enemy.isShadow)
                 {
@@ -501,8 +529,12 @@ window.onload = function () {
                     enemy.angle = 180;
                     game.time.events.add((Phaser.Timer.SECOND * .4), killNow, this);
                     counter += 1;
-                    game.world.remove(lifeAndScore);
-                    lifeAndScore = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+                    
+                    
+                    //game.world.remove(instr);
+                    //instr = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+                    game.world.remove(score);
+                    score = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
                     var explosionAnimation = explosions.getFirstExists(false);
                     explosionAnimation.reset(player.x, player.y);
                     explosionAnimation.play('kaboom', 20, false, true);
@@ -517,8 +549,9 @@ window.onload = function () {
                     player.body.velocity.y = -1000;
                     lifeCounter--;
                     caught.play();
-                    game.world.remove(lifeObject);
-                    lifeObject = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+                    game.world.remove(lives);
+                    //game.world.bringToTop(lives);
+                    lives = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
                     toggleInvincible();
                     game.time.events.add(2000, toggleInvincible, this);
                 }
@@ -530,8 +563,11 @@ window.onload = function () {
     function killPlayer(player, enemy)
     {
         dead = true;
+        player.frame = 14;
         player.angle = 90;
-        deadText = game.add.sprite(0, 0, 'dead');
+        instr3 = game.add.sprite(150,300, 'dead');
+        game.paused = true;
+        game.input.onTap.addOnce(restart,this); 
     }
     
     function gainLife(player, heart)
@@ -539,8 +575,8 @@ window.onload = function () {
         if (heart.poison)
         {
             lifeCounter++;
-            game.world.remove(lifeObject);
-            lifeObject = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+            game.world.remove(lives);
+            lives = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
             var lifeAnimation = lifeEffect.getFirstExists(false);
             lifeAnimation.reset(player.x, player.y);
             lifeAnimation.play('life', 14, false, true);
@@ -560,22 +596,56 @@ window.onload = function () {
     
     function start()
     {
-        instructionText.kill();
+        //text.kill();
         game.world.bringToTop(background);
         game.world.bringToTop(platform);
         game.world.bringToTop(counter);
-        game.world.remove(score);
-        lifeAndScore = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
-        score = game.add.sprite(0, 0, 'score');
-        lifeObject = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
-        surviveText = game.add.sprite(0, 0, 'survive');
-        game.time.events.add((Phaser.Timer.SECOND * 2), remove, this);
+        game.world.bringToTop(score);
+        game.world.bringToTop(instr);
+        game.world.bringToTop(lives);
+       // game.time.events.add((Phaser.Timer.SECOND * 2), remove, this);
+        
     }
     function remove()
     {
-        surviveText.kill();
+        instr2.kill();
     }
+     
     
+     function restart () {    
+     
+      dead=false; //revive the player
+      game.world.bringToTop(instr);
+      //reset the lifecount for the player
+      game.world.remove(lives);
+      lifeCounter=2;
+      lives = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+      //reset the score of the game
+      game.world.remove(score);
+      counter=0;
+      score = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
+      player.angle=0; //bring the player upright
+      game.paused = false; //unpause the game
+      game.world.remove(instr3);      
+      
+  }
+
+    function actionOnClick () {
+        startScreen.visible =! startScreen.visible;
+        game.world.remove(button);
+        game.world.remove(howToPlay);
+         game.time.events.add((Phaser.Timer.SECOND * 4), spawnEnemy, this);
+        game.time.events.add((Phaser.Timer.SECOND * 3), spawnSnow, this);
+        game.time.events.add((Phaser.Timer.SECOND * 1), start, this);
+        this.game.time.events.loop(500, function() {  //this.game.add.tween(text).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-10, 10)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
+        //this.game.time.events.loop(2000, function() {  
+            
+        this.game.add.tween(background).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-10, 10)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
+        this.game.time.events.loop(500, function() { this.game.add.tween(platform).to({x: game.rnd.between(-10, 10), y: game.rnd.between(-20, 20)}, 1750, Phaser.Easing.Quadratic.InOut, true);}, this);
+    } 
+ 
+   
+
     function render() {
     // Sprite debug info
     //game.debug.spriteBounds(player);
