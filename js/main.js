@@ -31,55 +31,34 @@ window.onload = function () {
         game.load.spritesheet('howToPlay','assets/instructionsNew.png',459,200);
     }
     
-    var player;
-    var platform;
-    var cursors;
+    var player, platform, cursors;
     var direction = 1;
     var maxSpeed = 300;
     var acceleration = 2300;
     var drag = 1200;
-    var snakeGroup;
-    var spiderGroup;
-    var shadowGroup;
-    var heartGroup;
-    var snowGroup;
+    var snakeGroup, spiderGroup, shadowGroup, heartGroup, snowGroup;
     var maxEnemy = 3;
     var lastEnemy = 0;
     var lastSnow = 0;
-    var enemySnake;
-    var selection;
+    var enemySnake, selection;
     var direction = 0;
     var poison;
     var dead = false;
-    var background;
-    var text;
-    var instr;
-    var instr2;
-    var instr3;
-    var score;
+    var background, text;
+    var instr, instr2, instr3, score;
     var counter = 0;
-    var explosions;
-    var lives;
-    var lifeEffect;
+    var explosions, lives, lifeEffect;
     var lifeCounter = 2;
     var steps = false;
     var jump;
     var invincible = false;
     var isShadow = false;
-    var walk;
-    var keySound;
-    var caught;
-    var escape;
-    var jump;
-    var stateText;
-    var startScreen;
-    var button;
-    var howToPlay;
+    var walk, keySound, caught, escape, jump;
+    var stateText, startScreen, button, howToPlay;
     
     function create() 
     {
-       
-        
+       //bring in assets to the world
         walk = game.add.audio('walkSound');
         keySound = game.add.audio('keyS');
         caught = game.add.audio('caught');
@@ -91,18 +70,17 @@ window.onload = function () {
         
         game.add.sprite(0, 0, 'background');
         background = game.add.sprite(0, 0, 'background2');
-       // text = game.add.sprite(0, 0, 'instruct');
         instr = game.add.sprite(0, 0, 'score1');
         
         //score of the game
         score = game.add.text(710, 35, ' ' + counter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
         
-        //number f lives
+        //number of lives added to the display 
         lives = game.add.text(540, 35, ' ' + lifeCounter, { font: "36px Verdana", fill: "#ffffff", align: "left" });
         background.scale.x = 1.3;
         background.scale.y = 1.3;
         
-
+        //add physics capabilities to the game
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
         platform = game.add.group();
@@ -120,6 +98,8 @@ window.onload = function () {
         player.body.collideWorldBounds = true;
         player.body.maxVelocity.setTo(maxSpeed, 2000);
         player.body.drag.setTo(drag, drag);
+        
+        //animations for the sprite for his actions
         player.animations.add('goRight', [6, 7, 8, 9], 12, true);
         player.animations.add('goLeft', [10, 11, 12, 13], 12, true);
         player.animations.add('faceRight', [9, 5], 8, true);
@@ -129,6 +109,7 @@ window.onload = function () {
         player.animations.add('crouchRight', [2, 3], 12, true);
         player.invincible = false;
         
+        //Group to enable extra lives
         heartGroup = game.add.group();
         for(var i = 0; i < 5; i++) 
         {
@@ -162,6 +143,7 @@ window.onload = function () {
             snow.kill();
         }
 
+        //Group of spider enemies and their animations for their sprite
         spiderGroup = game.add.group();
         for(var i = 0; i < 5; i++) 
         {
@@ -179,6 +161,7 @@ window.onload = function () {
             spider.kill();
         }
         
+        //Shadow/Ghost enemies group with animations
         shadowGroup = game.add.group();
         for(var i = 0; i < 5; i++) 
         {
@@ -196,6 +179,7 @@ window.onload = function () {
             shadow.kill();
         }
         
+        //Snake enemies with animations
         snakeGroup = game.add.group();
         for(var i = 0; i < 5; i++) 
         {
@@ -266,6 +250,7 @@ window.onload = function () {
     
     function update() 
     {
+        //physical collisions for the different interactions between objects
         game.physics.arcade.collide(player, platform);
         game.physics.arcade.collide(snakeGroup, platform);
         game.physics.arcade.collide(shadowGroup, platform);
@@ -277,7 +262,7 @@ window.onload = function () {
         game.physics.arcade.collide(player, shadowGroup, checkCollision, null, this);
         game.physics.arcade.collide(player, heartGroup, gainLife, null, this);
         game.physics.arcade.collide(player, snowGroup, checkCollision, null, this);
-        
+    //if the player is still alive, then he/she will have these actions enabled by the keyboard strokes    
     if (!dead)
     {
         if (cursors.isDown(Phaser.Keyboard.A) && !dead)
@@ -342,6 +327,7 @@ window.onload = function () {
             player.frame = 14;*/
     }
     
+    //This function assigns the randomzation for the different enemies to spawn. It makes it so that extra lives appear less frequently by giving it a smaller pool of integers to be selected from.
     function spawnEnemy()
     {
         lastEnemy = 0;
@@ -360,6 +346,8 @@ window.onload = function () {
         if (!dead) game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 3) + 1, spawnEnemy, this);
     }
     
+    //This spawns the snow or the "little falling objects"
+    // It gives randomization and a time delay, so the enemies don't just all spawn at once.
     function spawnSnow()
     {
         lastSnow = 0;
@@ -381,7 +369,7 @@ window.onload = function () {
         game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND), spawnSnow, this);
     }
         
-    
+    //Function to spawn spiders, with given delays, and basic physical properties needed
     function spawnSpider()
     {
         function grow1()
@@ -416,7 +404,7 @@ window.onload = function () {
         game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 7) + 1, grow1, this);
     }
 
-    
+    //Function to spawn snakes and their capabilities
     function spawnSnake()
     {
         function grow2()
@@ -486,6 +474,7 @@ window.onload = function () {
         game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 7) + 2, grow3, this);
     }
     
+    //Function for spawning extra lives and its animations, delays, and capabilities
     function spawnHeart()
     {
         function grow3()
@@ -515,6 +504,7 @@ window.onload = function () {
         game.time.events.add((game.rnd.frac() * Phaser.Timer.SECOND * 7) + 2, grow3, this);
     }
     
+    //This function checks the collision between the player and an enemy
     function checkCollision(player, enemy)
     {
         function killNow()
@@ -572,6 +562,7 @@ window.onload = function () {
         
     }
     
+    //This function is called when the player dies, it changes the sprite, assigns the variable dead to true, pauses the game, and requires the user to click to restart/play again
     function killPlayer(player, enemy)
     {
         dead = true;
@@ -582,6 +573,7 @@ window.onload = function () {
         game.input.onTap.addOnce(restart,this); 
     }
     
+    //When a player gains a life, this function is called and their life counter gets incremented
     function gainLife(player, heart)
     {
         if (heart.poison)
@@ -597,6 +589,7 @@ window.onload = function () {
         }
     }
     
+    //This function is for when the player dies, they get a couple seconds to recollect themselves and not get injured while they recover for a few seconds, the sprite will be tinted to give the player feedback to indicate this feature
     function toggleInvincible()
     {
         player.invincible = !player.invincible;
@@ -606,9 +599,9 @@ window.onload = function () {
             player.tint = 0xffffff;
     }
     
+    //This function helps with the layering issue, it brings the sprite to the top of the game world to ensure all of them aren't getting stacked beneath one another
     function start()
     {
-        //text.kill();
         game.world.bringToTop(background);
         game.world.bringToTop(platform);
         game.world.bringToTop(counter);
@@ -618,12 +611,14 @@ window.onload = function () {
        // game.time.events.add((Phaser.Timer.SECOND * 2), remove, this);
         
     }
+    
+    //another function to assist with layering
     function remove()
     {
         instr2.kill();
     }
      
-    
+    //When the player dies and wants to play again, once they click the screen, this function will be called
      function restart () {    
      
       dead=false; //revive the player
@@ -642,6 +637,7 @@ window.onload = function () {
       
   }
 
+    //when the "click to play" button is enabled by the player, this function gets called and the game starts up, gets rid of main menu, and begins to add the time events for spawning the enemies.
     function actionOnClick () {
         startScreen.visible =! startScreen.visible;
         game.world.remove(button);
